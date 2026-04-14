@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import uuid
 
 API_URL = "http://localhost:8000/chat"
 
@@ -7,8 +8,11 @@ st.set_page_config(page_title = "智能客服助手")
 st.title("🤖 智能客服助手")
 
 #初始化聊天内容
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
 #显示历史信息
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
@@ -25,7 +29,13 @@ if prompt := st.chat_input("请输入你的问题"):
     with st.chat_message("assistant"):
         with st.spinner("思考中"):
             try:
-                response = requests.post(API_URL, json={"messages": prompt})
+                response = requests.post(
+                        API_URL,
+                        json={
+                            "session_id": st.session_state.session_id,
+                            "messages":prompt
+                        }
+                    )
                 if response.status_code == 200:
                     reply = response.json()["reply"]
                 else:
